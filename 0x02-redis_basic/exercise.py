@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-"""
-script
-"""
-from typing import Union
+
+from typing import Union, Callable
 import uuid
 import redis
 
@@ -35,3 +33,50 @@ class Cache:
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
+
+    def get(self, key: str, fn: Callable[[bytes], Union[str, int]] = None) -> Union[str, int, None]:
+        """Retrieves the data associated with the given key from Redis.
+
+        Args:
+            key: The key of the data to be retrieved.
+            fn: A callable to convert the data back to the desired format.
+
+        Returns:
+            The data associated with the given key, or `None` if the key does
+            not exist.
+        """
+
+        data = self._redis.get(key)
+        if data is None:
+            return None
+
+        if fn is not None:
+            return fn(data)
+        else:
+            return data
+
+    def get_str(self, key: str) -> str:
+        """Retrieves the string associated with the given key from Redis.
+
+        Args:
+            key: The key of the string to be retrieved.
+
+        Returns:
+            The string associated with the given key, or `None` if the key does
+            not exist.
+        """
+
+        return self.get(key, fn=bytes.decode)
+
+    def get_int(self, key: str) -> int:
+        """Retrieves the integer associated with the given key from Redis.
+
+        Args:
+            key: The key of the integer to be retrieved.
+
+        Returns:
+            The integer associated with the given key, or `None` if the key does
+            not exist.
+        """
+
+        return self.get(key, fn=int)
